@@ -19,9 +19,9 @@ public:
     string name;
     int seatsSleeper, seatsAC;
     map<int, Passenger> bookedPassengers;
-    int ticketCounter; // to generate unique ticket numbers
+    int ticketCounter; // unique ticket counter
 
-    // Default constructor (needed for map)
+    // Default constructor
     Train() {
         no = 0;
         name = "";
@@ -57,7 +57,7 @@ public:
         ticketCounter++;
         p.ticketNo = ticketCounter;
         bookedPassengers[p.ticketNo] = p;
-        cout << "Ticket booked! Ticket No: " << p.ticketNo
+        cout << "✅ Ticket booked! Ticket No: " << p.ticketNo
              << " | Fare: " << p.fare << "\n";
         return true;
     }
@@ -89,16 +89,22 @@ int main() {
         "CHENNAI", "ARAKONAM", "VILLUPURAM", "TRICHY",
         "NAMAKKAL", "SALEM", "ERODE", "COIMBATORE"
     };
+
     map<pair<string,string>, int> distance;
 
-    // Distance between consecutive stations
-    for (int i = 0; i < (int)stations.size() - 1; i++) {
-        distance[{stations[i], stations[i+1]}] = 100 + i*20; // example km
-        distance[{stations[i+1], stations[i]}] = 100 + i*20; // reverse direction
+    // Build distance for all possible station pairs
+    for (int i = 0; i < (int)stations.size(); i++) {
+        int dist = 0;
+        for (int j = i + 1; j < (int)stations.size(); j++) {
+            dist += 100 + (j-1)*20;  // add distance of segment (example formula)
+            distance[{stations[i], stations[j]}] = dist;
+            distance[{stations[j], stations[i]}] = dist; // reverse
+        }
     }
 
     while (true) {
-        cout << "\n1. Book Ticket\n2. Cancel Ticket\n3. Check Availability\n4. Exit\nChoose: ";
+        cout << "\n--- Railway Reservation System ---\n";
+        cout << "1. Book Ticket\n2. Cancel Ticket\n3. Check Availability\n4. Exit\nChoose: ";
         int choice; cin >> choice;
         cin.ignore();
 
@@ -110,7 +116,7 @@ int main() {
         cin.ignore();
 
         if (trains.find(trainNo) == trains.end()) {
-            cout << "Invalid train number!\n";
+            cout << "❌ Invalid train number!\n";
             continue;
         }
 
@@ -121,12 +127,16 @@ int main() {
         } else if (choice == 1) {
             string src, dest, classType, name;
             int age;
+
+            cout << "\nAvailable stations:\n";
+            for (auto &s : stations) cout << "- " << s << "\n";
+
             cout << "Enter source station: "; getline(cin, src);
             cout << "Enter destination station: "; getline(cin, dest);
             src = toUpper(src); dest = toUpper(dest);
 
             if (distance.find({src,dest}) == distance.end()) {
-                cout << "Invalid route!\n"; continue;
+                cout << "❌ Invalid route!\n"; continue;
             }
 
             int km = distance[{src,dest}];
@@ -140,20 +150,20 @@ int main() {
             Passenger p = {name, age, classType, fare, 0};
 
             if (!tr.bookTicket(p)) {
-                cout << "No seats available in selected class!\n";
+                cout << "❌ No seats available in selected class!\n";
             }
         } else if (choice == 2) {
             int ticketNo;
             cout << "Enter ticket number to cancel: ";
             cin >> ticketNo; cin.ignore();
             if (tr.cancelTicket(ticketNo)) {
-                cout << "Ticket cancelled successfully.\n";
+                cout << "✅ Ticket cancelled successfully.\n";
             } else {
-                cout << "Invalid ticket number!\n";
+                cout << "❌ Invalid ticket number!\n";
             }
         }
     }
 
-    cout << "Thank you for using Railway Reservation System!\n";
+    cout << "🙏 Thank you for using Railway Reservation System!\n";
     return 0;
 }
