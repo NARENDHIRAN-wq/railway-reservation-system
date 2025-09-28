@@ -1,4 +1,4 @@
- ##### Railway Reservation System (C++)
+ # Railway Reservation System (C++)
  ### Overview
 
 This is a console-based Railway Reservation System built in C++.
