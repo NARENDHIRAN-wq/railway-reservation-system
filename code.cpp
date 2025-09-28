@@ -3,78 +3,75 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+
 using namespace std;
 
+// Passenger structure
 struct Passenger {
-    string name;
+    string passenger_name;
     int age;
-    string classType;
+    string class_type;
     int fare;
-    int ticketNo;
 };
 
+// Train class
 class Train {
 public:
     int train_no;
     string train_name;
-    int seatsSleeper, seatsAC;
-    map<int, Passenger> bookedPassengers;
-    int ticketCounter; // unique ticket counter
+    int seats_sleeper;
+    int seats_ac;
+    map<int, Passenger> booked_passengers;
 
     // Default constructor
     Train() {
         train_no = 0;
         train_name = "";
-        seatsSleeper = 0;
-        seatsAC = 0;
-        ticketCounter = 0;
+        seats_sleeper = 0;
+        seats_ac = 0;
     }
 
     // Parameterized constructor
-    Train(int train_no, string train_name, int sl, int ac) {
-        this->train_no = train_no;
-        this->train_name = train_name;
-        seatsSleeper = sl;
-        seatsAC = ac;
-        ticketCounter = 0;
+    Train(int no, string name, int sl, int ac) {
+        train_no = no;
+        train_name = name;
+        seats_sleeper = sl;
+        seats_ac = ac;
     }
 
     void showAvailability() {
-        cout << "Train " << train_name << " availability:\n";
-        cout << "Sleeper seats: " << seatsSleeper << "\n";
-        cout << "AC seats: " << seatsAC << "\n";
+        cout << "Train No: " << train_no << ", Train Name: " << train_name << "\n";
+        cout << "Sleeper seats: " << seats_sleeper << ", AC seats: " << seats_ac << "\n";
     }
 
     bool bookTicket(Passenger p) {
-        if (p.classType == "SLEEPER" && seatsSleeper > 0) {
-            seatsSleeper--;
-        } else if (p.classType == "AC" && seatsAC > 0) {
-            seatsAC--;
+        if (p.class_type == "SLEEPER" && seats_sleeper > 0) {
+            seats_sleeper--;
+            booked_passengers[booked_passengers.size() + 1] = p;
+            return true;
+        } else if (p.class_type == "AC" && seats_ac > 0) {
+            seats_ac--;
+            booked_passengers[booked_passengers.size() + 1] = p;
+            return true;
         } else {
             return false;
         }
-        // Generate unique ticket number
-        ticketCounter++;
-        p.ticketNo = ticketCounter+1225;
-        bookedPassengers[p.ticketNo] = p;
-        cout << "✅ Ticket booked! Ticket No: " << p.ticketNo
-             << " | Fare: " << p.fare << "\n";
-        return true;
     }
 
-    bool cancelTicket(int ticketNo) {
-        if (bookedPassengers.find(ticketNo) != bookedPassengers.end()) {
-            if (bookedPassengers[ticketNo].classType == "SLEEPER")
-                seatsSleeper++;
+    bool cancelTicket(int ticket_no) {
+        if (booked_passengers.find(ticket_no) != booked_passengers.end()) {
+            if (booked_passengers[ticket_no].class_type == "SLEEPER")
+                seats_sleeper++;
             else
-                seatsAC++;
-            bookedPassengers.erase(ticketNo);
+                seats_ac++;
+            booked_passengers.erase(ticket_no);
             return true;
         }
         return false;
     }
 };
 
+// Utility to convert string to uppercase
 string toUpper(string s) {
     transform(s.begin(), s.end(), s.begin(), ::toupper);
     return s;
@@ -82,88 +79,95 @@ string toUpper(string s) {
 
 int main() {
     map<int, Train> trains;
-    trains.emplace(101, Train(101, "Chennai Express", 5, 3));
-    trains.emplace(102, Train(102, "Coimbatore Express", 5, 3));
 
+    // Initialize trains
+    trains.insert({101, Train(101, "Chennai Express", 5, 3)});
+    trains.insert({102, Train(102, "Coimbatore Express", 5, 3)});
+
+    // Stations
     vector<string> stations = {
         "CHENNAI", "ARAKONAM", "VILLUPURAM", "TRICHY",
         "NAMAKKAL", "SALEM", "ERODE", "COIMBATORE"
     };
 
-    map<pair<string,string>, int> distance;
-
-    // Build distance for all possible station pairs
+    // Distance between stations
+    map<pair<string, string>, int> distance;
     for (int i = 0; i < (int)stations.size(); i++) {
         int dist = 0;
         for (int j = i + 1; j < (int)stations.size(); j++) {
-            dist += 100 + (j-1)*20;  // add distance of segment (example formula)
+            dist += 100 + (j - 1) * 20;  // example distance formula
             distance[{stations[i], stations[j]}] = dist;
             distance[{stations[j], stations[i]}] = dist; // reverse
         }
     }
 
     while (true) {
-        cout << "\n--- Railway Reservation System ---\n";
-        cout << "1. Book Ticket\n2. Cancel Ticket\n3. Check Availability\n4. Exit\nChoose: ";
+        cout << "\n1. Book Ticket\n2. Cancel Ticket\n3. Check Availability\n4. Exit\nChoose: ";
         int choice; cin >> choice;
         cin.ignore();
 
         if (choice == 4) break;
 
-        int trainNo;
-        cout << "Enter train number: ";
-        cin >> trainNo;
-        cin.ignore();
-
-        if (trains.find(trainNo) == trains.end()) {
-            cout << "Invalid train number!\n";
-            continue;
-        }
-
-        Train &tr = trains[trainNo];
-
         if (choice == 3) {
-            tr.showAvailability();
-        } else if (choice == 1) {
-            string src, dest, classType, name;
+            // Show availability of all trains
+            for (auto &t : trains) t.second.showAvailability();
+        } 
+        else if (choice == 1) {
+            string src, dest, class_type, passenger_name;
             int age;
-
-            cout << "\nAvailable stations:\n";
-            for (auto &s : stations) cout << "- " << s << "\n";
 
             cout << "Enter source station: "; getline(cin, src);
             cout << "Enter destination station: "; getline(cin, dest);
             src = toUpper(src); dest = toUpper(dest);
 
-            if (distance.find({src,dest}) == distance.end()) {
-                cout << "Invalid route!\n"; continue;
+            if (distance.find({src, dest}) == distance.end()) {
+                cout << "Invalid route!\n";
+                continue;
             }
 
-            int km = distance[{src,dest}];
-            cout << "Enter passenger name: "; getline(cin, name);
+            // Show trains available with train number
+            cout << "Available trains for " << src << " to " << dest << ":\n";
+            for (auto &t : trains) {
+                t.second.showAvailability();
+            }
+
+            int km = distance[{src, dest}];
+            cout << "Enter passenger name: "; getline(cin, passenger_name);
             cout << "Enter age: "; cin >> age; cin.ignore();
-            cout << "Enter class (Sleeper/AC): "; getline(cin, classType);
-            classType = toUpper(classType);
+            cout << "Enter class (Sleeper/AC): "; getline(cin, class_type);
+            class_type = toUpper(class_type);
 
-            int fare = (classType=="AC") ? km*2 : km*1;
+            int fare = (class_type == "AC") ? km * 2 : km * 1;
 
-            Passenger p = {name, age, classType, fare, 0};
+            Passenger p = {passenger_name, age, class_type, fare};
 
-            if (!tr.bookTicket(p)) {
-                cout << " No seats available in selected class!\n";
+            int train_no;
+            cout << "Enter train number to book: "; cin >> train_no; cin.ignore();
+
+            if (trains.find(train_no) == trains.end()) {
+                cout << "Invalid train number!\n";
+                continue;
             }
-        } else if (choice == 2) {
-            int ticketNo;
-            cout << "Enter ticket number to cancel: ";
-            cin >> ticketNo; cin.ignore();
-            if (tr.cancelTicket(ticketNo)) {
-                cout << "ticket cancelled successfully.\n";
+
+            if (trains[train_no].bookTicket(p)) {
+                cout << "Ticket booked! Fare: " << fare << "\n";
             } else {
-                cout << "Invalid ticket number!\n";
+                cout << "No seats available in selected class!\n";
+            }
+        } 
+        else if (choice == 2) {
+            int train_no, ticket_no;
+            cout << "Enter train number: "; cin >> train_no; cin.ignore();
+            cout << "Enter ticket number to cancel: "; cin >> ticket_no; cin.ignore();
+
+            if (trains.find(train_no) != trains.end() && trains[train_no].cancelTicket(ticket_no)) {
+                cout << "Ticket cancelled successfully.\n";
+            } else {
+                cout << "Invalid train number or ticket number!\n";
             }
         }
     }
 
-    cout << " Thank you for using Railway Reservation System!\n";
+    cout << "Thank you for using Railway Reservation System!\n";
     return 0;
 }
